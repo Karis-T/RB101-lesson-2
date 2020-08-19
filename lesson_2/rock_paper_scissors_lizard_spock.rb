@@ -49,7 +49,6 @@ scoreboard = { player: 0, computer: 0 }
 prompt("Welcome to Rock, Paper, Sissors, Lizard, Spock!")
 prompt("Can you beat the computer 5 times?")
 
-
 loop do
   choice = ''
   loop do
