@@ -1,0 +1,36 @@
+2. a method that takes an array of strings, and returns a string that is all those strings concatenated together
+
+#PSEUDO CODE
+- given a collection of words called "string to sentence"
+ 
+  - save each word in the collection as a value
+  - save a new blank sentence as a value
+  - iterate over each word 
+    - add each word that was iterated to the blank value
+    - add a space after each word
+    - return the the blank value that should now be full of words
+
+
+#PSEUDO FORMAL CODE
+START
+- given collection of strings called "string_to_sentence"
+  
+  - SET new_string = blank sentence string ready to receive words
+  - SET word = an iterated word in the collection
+
+  - WHILE collection of strings is being iterated over
+  - new_string << word + space
+
+  - PRINT new_string
+END      
+
+#RUBY CODE
+def string_to_sentence(array)
+new_string = ""
+array.each do |x|
+  new_string << x + " "
+end
+ new_string
+end
+
+puts string_to_sentence(["Hi", "there", "I'm", "Karis"])

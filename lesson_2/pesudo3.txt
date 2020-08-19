@@ -1,0 +1,21 @@
+3. a method that takes an array of integers, and returns a new array with every other element
+
+#PSEUDO CODE
+- given a collection of numbers called "new_array"
+ 
+  - save each word in the collection as a value
+    - return the joined words
+
+
+#PSEUDO FORMAL CODE
+START
+- given collection of strings called "join_words"
+  
+  - SET first_word = first iterated word in collection
+  - SET new_word = next iterated word in collection
+
+  - WHILE join_words is being iterated over
+  - result = first_word + space << (new_word)
+
+  - PRINT result
+END      

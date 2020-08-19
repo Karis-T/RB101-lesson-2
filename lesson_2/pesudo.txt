@@ -1,0 +1,26 @@
+1. a method that returns the sum of two integers
+
+#PSEUDO CODE
+- given two numbers called "sum of two"
+  
+  - save the first number as a first value
+  - save the second number as a second value
+  
+  - add the first value to the second value and save it into a third value which represents the sum of the two values
+
+  - return the third value
+
+#PSEUDO FORMAL CODE
+
+START
+- given two integers called "sum of two"
+
+  - SET first_number = value_1
+  - SET second_number = value_2
+  
+  - SET result = value_1 + value_2
+
+PRINT result
+END
+
+
