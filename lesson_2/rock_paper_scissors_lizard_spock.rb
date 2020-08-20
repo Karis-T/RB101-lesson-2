@@ -28,7 +28,7 @@ def display_welcome
 end
 
 def display_choice_prompt
-  choice_prompt = <<-MSG
+  <<-MSG
 
   Pick one:
 
@@ -139,7 +139,7 @@ loop do
 
   computer_choice = get_computer_choice
 
-  display_choices(choice,computer_choice)
+  display_choices(choice, computer_choice)
   display_who_won?(choice, computer_choice)
 
   update_score(choice, computer_choice, scoreboard)
