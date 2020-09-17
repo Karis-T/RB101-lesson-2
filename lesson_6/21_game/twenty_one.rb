@@ -24,25 +24,27 @@ def deal_cards!(deck, num)
   deck.shift(num)
 end
 
-# rubocop:disable Style/ConditionalAssignment
 def tally(hand, n)
   values = hand.map { |card| card[0] }
   total = 0
   values.each do |value|
-    if value == "A"
-      total += 11
-    elsif value =~ /[KQJ]/
-      total += 10
-    else
-      total += value.to_i
-    end
+    total += if value == "A"
+               11
+             elsif value =~ /[KQJ]/
+               10
+             else
+               value.to_i
+             end
   end
+  total = correct_for_aces(total, values, n)
+end
+
+def correct_for_aces(total, values, n)
   if total > n
     values.select { |value| value == "A" }.count.times { total -= 10 }
   end
   total
 end
-# rubocop:enable Style/ConditionalAssignment
 
 def busted?(hand, n)
   hand > n
@@ -54,26 +56,30 @@ def display_cards(hand)
   end
 end
 
-def hit_or_stay(total, n)
+def dealer_hit_or_stay(total, n)
   'stay' if (total >= (n - 4)) && (total <= n)
 end
 
 def display_winner(play_hand, deal_hand, score, n)
   if play_hand > n
     prompt(messages('you_bust'))
-    score[:dealer] += 1
+    update_score(score, :dealer)
   elsif deal_hand > n
     prompt(messages('dealer_bust'))
-    score[:player] += 1
+    update_score(score, :player)
   elsif deal_hand < play_hand
     prompt(messages('you_win'))
-    score[:player] += 1
+    update_score(score, :player)
   elsif deal_hand > play_hand
     prompt(messages('dealer_win'))
-    score[:dealer] += 1
+    update_score(score, :dealer)
   else
     prompt(messages('tie'))
   end
+end
+
+def update_score(score, key)
+  score[key] += 1
 end
 
 def display_score(score)
@@ -110,13 +116,17 @@ def display_end_of_round(play_hand, deal_hand, n)
   puts(messages('end_lines'))
 end
 
-def grand_winner?(scoreboard)
+def detect_grand_winner(scoreboard)
   if scoreboard[:dealer] == 5 || scoreboard[:player] == 5
     prompt(messages('grand_win'))
     display_grand_winner(scoreboard)
-    scoreboard[:dealer] = 0
-    scoreboard[:player] = 0
+    reset_scores(scoreboard)
   end
+end
+
+def reset_scores(scoreboard)
+  scoreboard[:dealer] = 0
+  scoreboard[:player] = 0
 end
 
 def display_grand_winner(scoreboard)
@@ -131,21 +141,85 @@ def game_over(p_hand, d_hand, score, n)
   display_end_of_round(p_hand, d_hand, n)
   display_winner((tally(p_hand, n)), (tally(d_hand, n)), score, n)
   display_score(score)
-  grand_winner?(score)
+  detect_grand_winner(score)
+end
+
+def variation_valid?(n)
+  (n >= 21) && (n <= 91) ? true : false
+end
+
+def choose_game_variation(n)
+  loop do
+    prompt(messages('valid_variation'))
+    n = gets.chomp.to_i
+    break if variation_valid?(n)
+    prompt(messages('invalid_variation'))
+  end
+  n
+end
+
+def display_both_hands(p_hand, d_hand, p_total)
+  prompt(messages('dealer_dealt'))
+  display_cards([d_hand])
+  puts(messages('unknown'))
+  newline
+  prompt(messages('you_dealt'))
+  display_cards(p_hand)
+  prompt "which adds up to: #{p_total}"
+end
+
+def player_turn(p_hand, p_total, n, deck)
+  loop do
+    newline
+    prompt(messages('hit_stay'))
+    answer = gets.chomp.downcase
+    next unless valid?(answer, 'h', 's')
+    if answer.downcase == 'h'
+      p_total = player_hit(p_hand, n, deck)
+    end
+    break if answer == 's' || busted?(p_total, n)
+  end
+  p_total
+end
+
+def player_hit(p_hand, n, deck)
+  p_hand << deal_cards!(deck, 1).flatten
+  prompt(messages('you_dealt'))
+  display_cards(p_hand)
+  prompt "which adds up to: #{tally(p_hand, n)}"
+  tally(p_hand, n)
+end
+
+def dealer_turn(d_hand, d_total, n, deck)
+  loop do
+    newline
+    prompt(messages('dealer_dealt'))
+    display_cards(d_hand)
+    prompt "which adds up to: #{d_total = tally(d_hand, n)}"
+    dealer_choice = dealer_hit_or_stay(d_total, n)
+    break if dealer_choice == 'stay' || busted?(d_total, n)
+    prompt(messages('dealer_hit'))
+    d_hand << deal_cards!(deck, 1).flatten
+  end
+  d_total
+end
+
+def display_welcome(n)
+  system 'clear'
+  prompt "Welcome to #{n}!"
+  prompt(messages('beat_dealer'))
+  newline
 end
 
 scoreboard = { player: 0, dealer: 0 }
 n = 0
 
-system 'clear'
-prompt(messages('21_variation'))
-
 loop do
-  prompt(messages('valid_variation'))
-  n = gets.chomp.to_i
-  next unless (n >= 21) && (n <= 91)
+  n = 0
   system 'clear'
-  prompt "Welcome to #{n}!"
+  prompt(messages('21_variation'))
+  n = choose_game_variation(n)
+  display_welcome(n)
 
   deck = initialize_deck
   player_hand = deal_cards!(deck, 2)
@@ -153,53 +227,21 @@ loop do
   total_player = tally(player_hand, n)
   total_dealer = tally(dealer_hand, n)
 
-  prompt(messages('dealer_dealt'))
-  display_cards([dealer_hand])
-  puts(messages('unknown'))
-  newline
-  prompt(messages('you_dealt'))
-  display_cards(player_hand)
-  prompt "which adds up to: #{total_player}"
+  display_both_hands(player_hand, dealer_hand, total_player)
 
-  loop do
-    newline
-    prompt(messages('hit_stay'))
-    answer = gets.chomp.downcase
-
-    next unless valid?(answer, 'hit', 'stay')
-
-    if answer.downcase == 'hit'
-      player_hand += deal_cards!(deck, 1)
-      prompt(messages('you_dealt'))
-      display_cards(player_hand)
-      prompt "which adds up to: #{total_player = tally(player_hand, n)}"
-    end
-
-    break if answer == 'stay' || busted?(total_player, n)
-  end
-
+  total_player = player_turn(player_hand, total_player, n, deck)
   dealer_hand = [dealer_hand] + [unknown_card]
   choice = nil
+
   if busted?(total_player, n)
     game_over(player_hand, dealer_hand, scoreboard, n)
     play_again?(choice) == 'y' ? next : break
   end
-
   prompt(messages('you_stay'))
+
   newline
   prompt(messages('dealer_unknown'))
-
-  loop do
-    newline
-    prompt(messages('dealer_dealt'))
-    display_cards(dealer_hand)
-    prompt "which adds up to: #{total_dealer = tally(dealer_hand, n)}"
-    dealer_choice = hit_or_stay(total_dealer, n)
-    break if dealer_choice == 'stay' || busted?(total_dealer, n)
-    prompt(messages('dealer_hit'))
-    dealer_hand += deal_cards!(deck, 1)
-  end
-
+  total_dealer = dealer_turn(dealer_hand, total_dealer, n, deck)
   if busted?(total_dealer, n)
     game_over(player_hand, dealer_hand, scoreboard, n)
     play_again?(choice) == 'y' ? next : break
